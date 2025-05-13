@@ -58,10 +58,7 @@
   <input type="number" id="down" value="10" />
 
   <label>Owner Finance Sales Price ($):</label>
-  <input type="number" id="salePrice" />
-
-  <label>Offer Price You're Considering ($):</label>
-  <input type="number" id="offer" />
+  <input type="number" id="salePrice" oninput="updateOffer()" />
 
   <label><input type="checkbox" id="estimateTI" checked> Estimate Taxes & Insurance (3.25% of sale price)</label>
 
@@ -71,18 +68,38 @@
   <label>Enter Monthly Insurance ($):</label>
   <input type="number" id="insurance" />
 
+  <label>Select Offer Percentage of Sale Price:</label>
+  <select id="offerPercent" onchange="updateOffer()">
+    <option value="0.50">50%</option>
+    <option value="0.55">55%</option>
+    <option value="0.60" selected>60%</option>
+    <option value="0.65">65%</option>
+    <option value="0.70">70%</option>
+    <option value="0.75">75%</option>
+  </select>
+
+  <label>Calculated Offer Price ($):</label>
+  <input type="text" id="offer" readonly />
+
   <button onclick="calculate()">Calculate</button>
 
   <div class="results" id="results"></div>
 
   <script>
+    function updateOffer() {
+      const salePrice = parseFloat(document.getElementById('salePrice').value);
+      const offerPercent = parseFloat(document.getElementById('offerPercent').value);
+      const offer = salePrice * offerPercent;
+      document.getElementById('offer').value = offer ? offer.toFixed(2) : '';
+    }
+
     function calculate() {
       const rent = parseFloat(document.getElementById('rent').value);
       const interest = parseFloat(document.getElementById('interest').value) / 100 / 12;
       const term = parseFloat(document.getElementById('term').value) * 12;
       const downPercent = parseFloat(document.getElementById('down').value) / 100;
       const salePrice = parseFloat(document.getElementById('salePrice').value);
-      const offer = parseFloat(document.getElementById('offer').value);
+      const offerPercent = parseFloat(document.getElementById('offerPercent').value);
       const estimateTI = document.getElementById('estimateTI').checked;
 
       let taxes = 0, insurance = 0;
@@ -97,10 +114,10 @@
       const totalTI = taxes + insurance;
       const monthlyPI = rent - totalTI;
       const piti = rent;
-
       const loanAmount = monthlyPI * (1 - Math.pow(1 + interest, -term)) / interest;
       const downPayment = loanAmount * downPercent;
       const calcSalePrice = loanAmount + downPayment;
+      const offer = salePrice * offerPercent;
 
       const offer50 = calcSalePrice * 0.50;
       const offer60 = calcSalePrice * 0.60;
@@ -128,7 +145,7 @@
         50% = $${offer50.toFixed(2)}<br />
         60% = $${offer60.toFixed(2)}<br />
         70% = $${offer70.toFixed(2)}<br /><br />
-        <strong>Your Offer:</strong> $${offer.toFixed(2)}<br />
+        <strong>Your Calculated Offer:</strong> $${offer.toFixed(2)}<br />
         <strong>Deal Grade:</strong> ${dealGrade}
       `;
     }
