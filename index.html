@@ -4,55 +4,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seller's Owner Finance Deal Calculator</title>
+  <title>Owner Finance Deal Analyzer</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-      background-color: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-      font-size: 22px;
-    }
-    label {
-      display: block;
-      margin: 10px 0 5px;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 15px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .results {
-      background-color: white;
-      padding: 15px;
-      margin-top: 20px;
-      border-radius: 5px;
-    }
+    body { font-family: sans-serif; padding: 20px; background: #f7f7f7; max-width: 700px; margin: auto; }
+    h1 { text-align: center; font-size: 22px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 15px; }
+    button { width: 100%; padding: 12px; background: #007BFF; color: white; font-size: 16px; border: none; cursor: pointer; }
+    .results { background: white; padding: 15px; margin-top: 20px; border-radius: 8px; }
+    .green { color: green; font-weight: bold; }
+    .red { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Seller's Owner Finance Deal Calculator</h1>
+  <h1>Owner Finance Deal Analyzer</h1>
 
   <label>Estimated Market Value ($):</label>
-  <input type="number" id="marketValue" oninput="updateSalePrice()" />
+  <input type="number" id="marketValue" />
 
   <label>Markup Percentage (%):</label>
-  <input type="number" id="markup" value="15" oninput="updateSalePrice()" />
-
-  <label>Owner Finance Sale Price ($):</label>
-  <input type="text" id="salePrice" readonly />
+  <input type="number" id="markup" value="15" />
 
   <label>Monthly Rent ($):</label>
   <input type="number" id="rent" />
@@ -66,7 +37,7 @@
   <label>Down Payment (%):</label>
   <input type="number" id="down" value="10" />
 
-  <label><input type="checkbox" id="estimateTI" checked> Estimate Taxes & Insurance (3.25% of sale price)</label>
+  <label><input type="checkbox" id="estimateTI" checked> Estimate Taxes & Insurance (3.25% of OF price)</label>
 
   <label>OR Enter Monthly Taxes ($):</label>
   <input type="number" id="taxes" />
@@ -78,10 +49,10 @@
   <select id="offerPercent" onchange="updateOffer()">
     <option value="0.50">50%</option>
     <option value="0.55">55%</option>
-    <option value="0.60" selected>60%</option>
+    <option value="0.60">60%</option>
     <option value="0.65">65%</option>
     <option value="0.70">70%</option>
-    <option value="0.75">75%</option>
+    <option value="0.75" selected>75%</option>
   </select>
 
   <label>Calculated Offer Price ($):</label>
@@ -92,14 +63,6 @@
   <div class="results" id="results"></div>
 
   <script>
-    function updateSalePrice() {
-      const marketValue = parseFloat(document.getElementById('marketValue').value);
-      const markup = parseFloat(document.getElementById('markup').value);
-      const salePrice = marketValue * (1 + markup / 100);
-      document.getElementById('salePrice').value = salePrice ? salePrice.toFixed(2) : '';
-      updateOffer();
-    }
-
     function updateOffer() {
       const marketValue = parseFloat(document.getElementById('marketValue').value);
       const offerPercent = parseFloat(document.getElementById('offerPercent').value);
@@ -108,17 +71,20 @@
     }
 
     function calculate() {
+      const marketValue = parseFloat(document.getElementById('marketValue').value);
+      const markup = parseFloat(document.getElementById('markup').value);
       const rent = parseFloat(document.getElementById('rent').value);
       const interest = parseFloat(document.getElementById('interest').value) / 100 / 12;
       const term = parseFloat(document.getElementById('term').value) * 12;
       const downPercent = parseFloat(document.getElementById('down').value) / 100;
-      const salePrice = parseFloat(document.getElementById('salePrice').value);
-      const offer = parseFloat(document.getElementById('offer').value);
       const estimateTI = document.getElementById('estimateTI').checked;
+      const offer = parseFloat(document.getElementById('offer').value);
+
+      const ofPrice = marketValue * (1 + markup / 100);
 
       let taxes = 0, insurance = 0;
       if (estimateTI) {
-        let annualTI = salePrice * 0.0325;
+        let annualTI = ofPrice * 0.0325;
         taxes = insurance = (annualTI / 2) / 12;
       } else {
         taxes = parseFloat(document.getElementById('taxes').value);
@@ -126,34 +92,42 @@
       }
 
       const totalTI = taxes + insurance;
-      const monthlyPI = rent - totalTI;
-      const piti = rent;
+      const maxMonthlyPI = rent - totalTI;
+      const maxLoan = maxMonthlyPI * (1 - Math.pow(1 + interest, -term)) / interest;
 
-      const loanAmount = monthlyPI * (1 - Math.pow(1 + interest, -term)) / interest;
-      const downPayment = loanAmount * downPercent;
+      const actualLoan = ofPrice * (1 - downPercent);
+      const downPayment = ofPrice * downPercent;
+      const actualPI = actualLoan * interest / (1 - Math.pow(1 + interest, -term));
+      const totalPITI = actualPI + totalTI;
 
-      const offer50 = marketValue * 0.50;
-      const offer60 = marketValue * 0.60;
-      const offer70 = marketValue * 0.70;
+      const buyerCanAfford = maxLoan >= actualLoan;
+      const buyerMessage = buyerCanAfford
+        ? "<span class='green'>YES – Buyer can afford this deal</span>"
+        : "<span class='red'>NO – Buyer cannot afford this PITI</span>";
 
+      let gradeRatio = offer / marketValue;
       let dealGrade = "";
-      if (offer <= offer50) {
+      if (gradeRatio <= 0.50) {
         dealGrade = "Green Light Deal (Great)";
-      } else if (offer <= offer60) {
+      } else if (gradeRatio <= 0.60) {
         dealGrade = "Yellow Light Deal (Good)";
-      } else if (offer <= offer70) {
+      } else if (gradeRatio <= 0.70) {
         dealGrade = "Orange Light Deal (Tight)";
       } else {
         dealGrade = "Red Light Deal (Too Much)";
       }
 
       document.getElementById('results').innerHTML = `
-        <strong>Owner Finance Sale Price:</strong> $${salePrice.toFixed(2)}<br />
-        <strong>Monthly Buyer Payment (P&I):</strong> $${monthlyPI.toFixed(2)}<br />
-        <strong>Monthly Taxes & Insurance (T&I):</strong> $${totalTI.toFixed(2)}<br />
-        <strong>Total PITI:</strong> $${piti.toFixed(2)}<br /><br />
-        <strong>Estimated Loan Amount:</strong> $${loanAmount.toFixed(2)}<br />
-        <strong>Down Payment:</strong> $${downPayment.toFixed(2)}<br /><br />
+        <strong>Owner Finance Sale Price:</strong> $${ofPrice.toFixed(2)}<br />
+        <strong>Monthly P&I (Buyer):</strong> $${actualPI.toFixed(2)}<br />
+        <strong>Monthly T&I:</strong> $${totalTI.toFixed(2)}<br />
+        <strong>Total PITI:</strong> $${totalPITI.toFixed(2)}<br /><br />
+
+        <strong>Estimated Max Loan Buyer Can Afford:</strong> $${maxLoan.toFixed(2)}<br />
+        <strong>Actual Loan Amount:</strong> $${actualLoan.toFixed(2)}<br />
+        <strong>Down Payment:</strong> $${downPayment.toFixed(2)}<br />
+        <strong>${buyerMessage}</strong><br /><br />
+
         <strong>Your Offer:</strong> $${offer.toFixed(2)}<br />
         <strong>Deal Grade:</strong> ${dealGrade}
       `;
