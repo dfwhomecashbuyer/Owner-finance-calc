@@ -99,6 +99,7 @@
       const downPayment = ofPrice * downPercent;
       const actualPI = actualLoan * interest / (1 - Math.pow(1 + interest, -term));
       const totalPITI = actualPI + totalTI;
+      const monthlyInterestOnly = actualLoan * interest;
 
       const buyerCanAfford = maxLoan >= actualLoan;
       const buyerMessage = buyerCanAfford
@@ -119,9 +120,12 @@
 
       document.getElementById('results').innerHTML = `
         <strong>Owner Finance Sale Price:</strong> $${ofPrice.toFixed(2)}<br />
-        <strong>Monthly P&I (Buyer):</strong> $${actualPI.toFixed(2)}<br />
+        <strong>Monthly Buyer P&I:</strong> $${actualPI.toFixed(2)}<br />
         <strong>Monthly T&I:</strong> $${totalTI.toFixed(2)}<br />
-        <strong>Total PITI:</strong> $${totalPITI.toFixed(2)}<br /><br />
+        <strong>Total Buyer PITI:</strong> $${totalPITI.toFixed(2)}<br /><br />
+
+        <strong>Private Lender Interest-Only Payment:</strong> $${monthlyInterestOnly.toFixed(2)}<br />
+        <strong>Your Monthly Profit (from full PITI):</strong> $${(totalPITI - monthlyInterestOnly).toFixed(2)}<br /><br />
 
         <strong>Estimated Max Loan Buyer Can Afford:</strong> $${maxLoan.toFixed(2)}<br />
         <strong>Actual Loan Amount:</strong> $${actualLoan.toFixed(2)}<br />
