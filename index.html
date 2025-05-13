@@ -127,6 +127,10 @@
         <strong>Actual Loan Amount:</strong> $${actualLoan.toFixed(2)}<br />
         <strong>Down Payment:</strong> $${downPayment.toFixed(2)}<br />
         <strong>${buyerMessage}</strong><br /><br />
+    <strong>Private Lender Interest-Only Payment (per month):</strong> $${(actualLoan * interest).toFixed(2)}<br />
+    <strong>Your Monthly Profit (if you collect PITI & pay T&I):</strong> $${(totalPITI - (actualLoan * interest)).toFixed(2)}<br />
+    <strong>Your Monthly Profit (if buyer pays T&I separately):</strong> $${(actualPI - (actualLoan * interest)).toFixed(2)}<br /><br />
+    
 
         <strong>Your Offer:</strong> $${offer.toFixed(2)}<br />
         <strong>Deal Grade:</strong> ${dealGrade}
