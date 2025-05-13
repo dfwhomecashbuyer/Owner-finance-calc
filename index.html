@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Owner Finance Deal Analyzer</title>
+  <title>Seller's Owner Finance Deal Calculator</title>
   <style>
     body {
       font-family: sans-serif;
@@ -43,7 +43,16 @@
   </style>
 </head>
 <body>
-  <h1>Owner Finance Deal Analyzer</h1>
+  <h1>Seller's Owner Finance Deal Calculator</h1>
+
+  <label>Estimated Market Value ($):</label>
+  <input type="number" id="marketValue" oninput="updateSalePrice()" />
+
+  <label>Markup Percentage (%):</label>
+  <input type="number" id="markup" value="15" oninput="updateSalePrice()" />
+
+  <label>Owner Finance Sale Price ($):</label>
+  <input type="text" id="salePrice" readonly />
 
   <label>Monthly Rent ($):</label>
   <input type="number" id="rent" />
@@ -57,9 +66,6 @@
   <label>Down Payment (%):</label>
   <input type="number" id="down" value="10" />
 
-  <label>Market Value Price ($):</label>
-  <input type="number" id="salePrice" oninput="updateOffer()" />
-
   <label><input type="checkbox" id="estimateTI" checked> Estimate Taxes & Insurance (3.25% of sale price)</label>
 
   <label>OR Enter Monthly Taxes ($):</label>
@@ -68,7 +74,7 @@
   <label>Enter Monthly Insurance ($):</label>
   <input type="number" id="insurance" />
 
-  <label>Select Offer Percentage of Sale Price:</label>
+  <label>Select Offer Percentage of Market Value:</label>
   <select id="offerPercent" onchange="updateOffer()">
     <option value="0.50">50%</option>
     <option value="0.55">55%</option>
@@ -86,10 +92,18 @@
   <div class="results" id="results"></div>
 
   <script>
+    function updateSalePrice() {
+      const marketValue = parseFloat(document.getElementById('marketValue').value);
+      const markup = parseFloat(document.getElementById('markup').value);
+      const salePrice = marketValue * (1 + markup / 100);
+      document.getElementById('salePrice').value = salePrice ? salePrice.toFixed(2) : '';
+      updateOffer();
+    }
+
     function updateOffer() {
-      const salePrice = parseFloat(document.getElementById('salePrice').value);
+      const marketValue = parseFloat(document.getElementById('marketValue').value);
       const offerPercent = parseFloat(document.getElementById('offerPercent').value);
-      const offer = salePrice * offerPercent;
+      const offer = marketValue * offerPercent;
       document.getElementById('offer').value = offer ? offer.toFixed(2) : '';
     }
 
@@ -99,7 +113,7 @@
       const term = parseFloat(document.getElementById('term').value) * 12;
       const downPercent = parseFloat(document.getElementById('down').value) / 100;
       const salePrice = parseFloat(document.getElementById('salePrice').value);
-      const offerPercent = parseFloat(document.getElementById('offerPercent').value);
+      const offer = parseFloat(document.getElementById('offer').value);
       const estimateTI = document.getElementById('estimateTI').checked;
 
       let taxes = 0, insurance = 0;
@@ -114,14 +128,13 @@
       const totalTI = taxes + insurance;
       const monthlyPI = rent - totalTI;
       const piti = rent;
+
       const loanAmount = monthlyPI * (1 - Math.pow(1 + interest, -term)) / interest;
       const downPayment = loanAmount * downPercent;
-      const calcSalePrice = loanAmount + downPayment;
-      const offer = salePrice * offerPercent;
 
-      const offer50 = calcSalePrice * 0.50;
-      const offer60 = calcSalePrice * 0.60;
-      const offer70 = calcSalePrice * 0.70;
+      const offer50 = marketValue * 0.50;
+      const offer60 = marketValue * 0.60;
+      const offer70 = marketValue * 0.70;
 
       let dealGrade = "";
       if (offer <= offer50) {
@@ -135,17 +148,13 @@
       }
 
       document.getElementById('results').innerHTML = `
+        <strong>Owner Finance Sale Price:</strong> $${salePrice.toFixed(2)}<br />
         <strong>Monthly Buyer Payment (P&I):</strong> $${monthlyPI.toFixed(2)}<br />
         <strong>Monthly Taxes & Insurance (T&I):</strong> $${totalTI.toFixed(2)}<br />
-        <strong>Estimated Total PITI:</strong> $${piti.toFixed(2)}<br /><br />
+        <strong>Total PITI:</strong> $${piti.toFixed(2)}<br /><br />
         <strong>Estimated Loan Amount:</strong> $${loanAmount.toFixed(2)}<br />
-        <strong>Down Payment:</strong> $${downPayment.toFixed(2)}<br />
-        <strong>Target Sale Price:</strong> $${calcSalePrice.toFixed(2)}<br /><br />
-        <strong>Max Safe Offers:</strong><br />
-        50% = $${offer50.toFixed(2)}<br />
-        60% = $${offer60.toFixed(2)}<br />
-        70% = $${offer70.toFixed(2)}<br /><br />
-        <strong>Your Calculated Offer:</strong> $${offer.toFixed(2)}<br />
+        <strong>Down Payment:</strong> $${downPayment.toFixed(2)}<br /><br />
+        <strong>Your Offer:</strong> $${offer.toFixed(2)}<br />
         <strong>Deal Grade:</strong> ${dealGrade}
       `;
     }
